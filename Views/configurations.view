@@ -2,12 +2,15 @@
   Children =
   {
     {
+      Name = "ConfigList",
       Type = "ListView",
       Items = {
         "08:00 -> Farm",
         "13:00 -> Feed the cat",
         "19:00 -> Take out the garbage",
       },
+
+      CanSelect = true,
 
       X = 1,
       Y = 4,
@@ -17,30 +20,68 @@
     },
 
     {
+      Name = "Heading",
       Type = "Label",
       Text = "Configurations",
-      X = 2,
+      X = 6,
       Y = 2,
 
       TextColour = "white"
     },
 
     {
+      Name = "Exit",
+      Type = "Button",
+      Text = "X",
+
+      Visible = true,
+
+      X = 2,
+      Y = 2,
+
+      BackgroundColour = "red",
+      TextColour = "white"
+    },
+
+    {
+      Name = "Add",
       Type = "Button",
       X = "100%,-6",
       Y = 2,
 
       Width = 3,
-      Text = "+"
+      Text = "+",
+
+      BackgroundColour = "green"
     },
 
     {
+      Name = "Remove",
       Type = "Button",
       X = "100%,-3",
       Y = 2,
 
       Width = 3,
-      Text = "-"
+      Text = "-",
+
+      BackgroundColour = "red"
+    },
+
+    {
+      Name = "ConfigEdit",
+      Type = "Button",
+      X = "100%,-14",
+      Y = 2,
+
+      Text = "Edit",
+    },
+
+    {
+      Type = "Button",
+      X = "100%,-27",
+      Y = 2,
+
+      Text = "Force Run"
     }
   },
 

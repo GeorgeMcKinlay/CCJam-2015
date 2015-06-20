@@ -1,0 +1,150 @@
+{
+  Children =
+  {
+    {
+      Type = "Label",
+      Text = "Configuration Wizard",
+      X = 6,
+      Y = 2,
+
+      TextColour = "white"
+    },
+
+    {
+      Name = "Back",
+      Type = "Button",
+      Text = "<",
+      X = 2,
+      Y = 2,
+    },
+
+    {
+      Name = "Next",
+      Type = "Button",
+      Text = "Next",
+      X = "100%,-7",
+      Y = 2
+    },
+
+    {
+      Name = "Previous",
+      Type = "Button",
+      Text = "Prev",
+      X = "100%,-14",
+      Y = 2
+    },
+
+    {
+      Name = "ConfigTypeView",
+      Type = "View",
+      X = 1,
+      Y = 4,
+
+      Width = "100%",
+      Height = "100%,-3",
+
+      Visible = true,
+      Enabled = true,
+      IgnoreClick = false,
+
+      BackgroundColour = "lightGrey",
+
+      Children =
+      {
+        {
+          Type = "Label",
+          Text = "Select a configuration type:",
+          X = 2,
+          Y = 2,
+        },
+
+        {
+          Name = "RadioLuaProg",
+          Type = "RadioButton",
+          X = 4,
+          Y = 4,
+
+          Selected = true,
+
+          Text = "Execute a Lua program"
+        },
+
+        {
+          Type = "Label",
+          X = 6,
+          Y = 6,
+
+          Text = "If you'd like to run an existing program,"
+        },
+
+        {
+          Type = "Label",
+          X = 6,
+          Y = 7,
+
+          Text = "choose this option."
+        },
+
+        {
+          Name = "RadioASSTask",
+          Type = "RadioButton",
+          X = 4,
+          Y = "50%,2",
+
+          Text = "Run an A.S.S. task"
+        },
+
+        {
+          Type = "Label",
+          X = 6,
+          Y = "50%,4",
+
+          Text = "With this option you can run or create"
+        },
+
+        {
+          Type = "Label",
+          X = 6,
+          Y = "50%,5",
+
+          Text = "a new A.S.S. task. These are easy to make"
+        },
+
+        {
+          Type = "Label",
+          X = 6,
+          Y = "50%,6",
+
+          Text = "contrary to a Lua program."
+        }
+      }
+    },
+
+    {
+      Name = "ConfigSettingsView",
+      Type = "View",
+
+      X = 1,
+      Y = 4,
+
+      Width = "100%",
+      Height = "100%,-3",
+
+      Visible = false,
+      Enabled = false,
+      IgnoreClick = true,
+
+      Children =
+      {
+        {
+          Type = "Label",
+          X = 1,
+          Y = 1,
+          Text = "ayyy sick settings bruv"
+        }
+      }
+    }
+  },
+
+  BackgroundColour = "grey"
+}
