@@ -1,0 +1,48 @@
+{
+  Children =
+  {
+    {
+      Type = "ListView",
+      Items = {
+        "08:00 -> Farm",
+        "13:00 -> Feed the cat",
+        "19:00 -> Take out the garbage",
+      },
+
+      X = 1,
+      Y = 4,
+
+      Width = "100%",
+      Height = "100%,-3"
+    },
+
+    {
+      Type = "Label",
+      Text = "Configurations",
+      X = 2,
+      Y = 2,
+
+      TextColour = "white"
+    },
+
+    {
+      Type = "Button",
+      X = "100%,-6",
+      Y = 2,
+
+      Width = 3,
+      Text = "+"
+    },
+
+    {
+      Type = "Button",
+      X = "100%,-3",
+      Y = 2,
+
+      Width = 3,
+      Text = "-"
+    }
+  },
+
+  BackgroundColour = "grey"
+}
