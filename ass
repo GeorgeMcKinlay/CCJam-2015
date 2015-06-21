@@ -1,3 +1,6 @@
+local CONFIG_TYPE_TASK = 0
+local CONFIG_TYPE_LUA = 1
+
 local ok, err = pcall(function()
   local bedrockPath='/' if OneOS then OneOS.LoadAPI('/System/API/Bedrock.lua', false)elseif fs.exists(bedrockPath..'/Bedrock')then os.loadAPI(bedrockPath..'/Bedrock')else if http then print('Downloading Bedrock...')local h=http.get('http://pastebin.com/raw.php?i=0MgKNqpN')if h then local f=fs.open(bedrockPath..'/Bedrock','w')f.write(h.readAll())f.close()h.close()os.loadAPI(bedrockPath..'/Bedrock')else error('Failed to download Bedrock. Is your internet working?') end else error('This program needs to download Bedrock to work. Please enable HTTP.') end end if Bedrock then Bedrock.BasePath = bedrockPath Bedrock.ProgramPath = shell.getRunningProgram() end
 
@@ -5,6 +8,109 @@ local ok, err = pcall(function()
 
   local initConfigsView = nil
   local initConfigWizard = nil
+  local initConfigEditView = nil
+
+  local configs = {}
+
+  local function getConfigByID(id)
+    for _,v in pairs(configs) do
+      if v.ID == id then
+        return v
+      end
+    end
+
+    return nil
+  end
+
+  local function saveConfigs()
+    local file = fs.open(shell.resolve(".assconfigs"), "w")
+    file.write(textutils.serialise(configs))
+    file.close()
+  end
+
+  local function loadConfigs()
+    local file = fs.open(shell.resolve(".assconfigs"), "r")
+    if file then
+      configs = textutils.unserialise(file.readAll())
+      file.close()
+    else
+      configs = {}
+    end
+  end
+
+  initConfigEditView = function(config)
+    program:LoadView("configedit")
+
+    local backButton = program:GetObject("Back")
+    backButton.OnClick = function(self, event, side, x, y)
+      return initConfigsView()
+    end
+
+    local done = program:GetObject("Done")
+
+    local invInputText1 = program:GetObject("InvalidInputText1")
+    local invInputText2 = program:GetObject("InvalidInputText2")
+
+    local function updateInvalidState()
+      invInputText1.Visible = invalid
+      invInputText2.Visible = invalid
+      done.Enabled = not invalid
+    end
+
+    local fileBox = program:GetObject("FileInput")
+    local nameBox = program:GetObject("NameBox")
+    local timeBox = program:GetObject("TimeBox")
+
+    local cfg = getConfigByID(config.ID)
+    fileBox.Text = cfg.File
+    nameBox.Text = cfg.ConfigName
+    timeBox.Text = textutils.formatTime(cfg.Time, true)
+
+    local invalidable = {
+      [timeBox] = "OnChange",
+      [fileBox] = "OnChange",
+      [nameBox] = "OnChange"
+    }
+
+    local function checkInvalids()
+      for k1,v1 in pairs(invalidable) do
+        if k1.Invalid then
+          invalid = true
+          updateInvalidState()
+          return
+        end
+      end
+
+      invalid = false
+      updateInvalidState()
+    end
+
+    for k,v in pairs(invalidable) do
+      k[v] = checkInvalids
+    end
+
+    checkInvalids()
+
+    local fileLabel = program:GetObject("FileLabel")
+    fileLabel.Text = fileLabel.Text:gsub("%.%.%.", cfg.Type == CONFIG_TYPE_LUA and "Lua" or "Task")
+
+    done.OnClick = function()
+      local hour, second = timeBox.Text:match("(%d+):(%d+)")
+      hour = tostring(hour)
+      second = tostring(second)
+
+      local time = hour + (second / 60)
+
+      cfg.ConfigName = nameBox.Text
+      cfg.File = fileBox.Text
+      cfg.Time = time
+      cfg.Text = textutils.formatTime(time, true) .. " -> " .. cfg.ConfigName
+
+      saveConfigs()
+
+      return initConfigsView()
+    end
+  end
 
   initConfigWizard = function()
     program:LoadView("configwiz")
@@ -13,7 +119,8 @@ local ok, err = pcall(function()
     local viewIndex = 1
     local views = {
       [1] = program:GetObject("ConfigTypeView"),
-      [2] = program:GetObject("ConfigSettingsView")
+      [2] = program:GetObject("ConfigSettingsView"),
+      [3] = program:GetObject("ConfigFinishView")
     }
 
     local function changeView(idx)
@@ -40,23 +147,11 @@ local ok, err = pcall(function()
     local nextButton = program:GetObject("Next")
     nextButton.OnClick = function(self, event, side, x, y)
       changeView(viewIndex + 1)
-
-      if viewIndex == #views then
-        nextButton.Text = "Done"
-      else
-        nextButton.Text = "Next"
-      end
     end
 
     local prevButton = program:GetObject("Previous")
     prevButton.OnClick = function(self, event, side, x, y)
       changeView(viewIndex - 1)
-
-      if viewIndex == #views then
-        nextButton.Text = "Done"
-      else
-        nextButton.Text = "Next"
-      end
     end
 
     local radioLuaProg = program:GetObject("RadioLuaProg")
@@ -70,6 +165,33 @@ local ok, err = pcall(function()
       radioLuaProg
     }
 
+    local fileBox = program:GetObject("FileInput")
+    local nameBox = program:GetObject("NameBox")
+    local timeBox = program:GetObject("TimeBox")
+    timeBox.Text = textutils.formatTime(os.time() + 0.04, true)
+
+    local function addConfig()
+      local hour, second = timeBox.Text:match("(%d+):(%d+)")
+      hour = tostring(hour)
+      second = tostring(second)
+
+      local time = hour + (second / 60)
+      local name = nameBox.Text
+      local file = fileBox.Text
+
+      local idx = #configs + 1
+      configs[idx] = {
+        ID = idx,
+        Time = time,
+        ConfigName = name,
+        File = file,
+        Text = textutils.formatTime(time, true) .. " -> " .. name,
+        Type = radioLuaProg.Selected and CONFIG_TYPE_LUA or CONFIG_TYPE_TASK
+      }
+
+      saveConfigs()
+    end
+
     local fileLabel = program:GetObject("FileLabel")
     fileLabel.InitialText = fileLabel.Text
 
@@ -82,21 +204,34 @@ local ok, err = pcall(function()
 
     typeSelectChange()
 
-    local timeBox = program:GetObject("TimeBox")
-    timeBox.Text = textutils.formatTime(os.time() + 0.04, true)
-
     local invalid = false
 
     local invInputText1 = program:GetObject("InvalidInputText1")
     local invInputText2 = program:GetObject("InvalidInputText2")
 
+    local readyErrorMessage = program:GetObject("ReadyErrorMessage")
+    local readyMessage = program:GetObject("ReadyMessage")
+    local finishButton = program:GetObject("FinishButton")
+
+    finishButton.OnClick = function()
+      addConfig()
+      return initConfigsView()
+    end
+
     local function updateInvalidState()
       invInputText1.Visible = invalid
       invInputText2.Visible = invalid
+
+      readyErrorMessage.Visible = invalid
+      readyMessage.Visible = not invalid
+      finishButton.Enabled = not invalid
     end
 
-    local fileBox = program:GetObject("FileInput")
-    local invalidable = { [timeBox] = "OnChange", [fileBox] = "OnChange" }
+    local invalidable = {
+      [timeBox] = "OnChange",
+      [fileBox] = "OnChange",
+      [nameBox] = "OnChange"
+    }
 
     local function checkInvalids()
       for k1,v1 in pairs(invalidable) do
@@ -115,22 +250,32 @@ local ok, err = pcall(function()
       k[v] = checkInvalids
     end
 
-    local nameBox = program:GetObject("NameBox")
     checkInvalids()
-
-    return {
-
-    }
   end
 
   initConfigsView = function()
     program:LoadView("configurations")
 
+    loadConfigs()
+
     local configList = program:GetObject("ConfigList")
+
+    local function reloadConfigs()
+      for _,v in pairs(configs) do
+        configList.Items[#configList.Items + 1] = {
+          ID = v.ID,
+          Text = v.Text
+        }
+      end
+      configList:UpdateItems()
+    end
+
+    reloadConfigs()
 
     local addButton = program:GetObject("Add")
     addButton.OnClick = function(self, event, side, x, y)
-      return initConfigWizard()
+      local result = initConfigWizard()
+      configList.Items[#configList.Items] = result
     end
 
     local remButton = program:GetObject("Remove")
@@ -138,9 +283,19 @@ local ok, err = pcall(function()
       if configList.Selected ~= nil then
         program:DisplayAlertWindow("Confirmation", "Are you sure you want to delete this item?", { "Pls no", "Yeah" }, function(value)
           if value == "Yeah" then
-            local idx = configList:GetIndex(configList.Selected)
+            local cfg = configList.Selected
+            local idx = configList:GetIndex(cfg)
             table.remove(configList.Items, idx)
             configList:UpdateItems()
+
+            for k,v in pairs(configs) do
+              if v.ID == cfg.ID then
+                configs[k] = nil
+                break
+              end
+            end
+
+            saveConfigs()
           end
         end)
       else
@@ -151,10 +306,15 @@ local ok, err = pcall(function()
     local editButton = program:GetObject("ConfigEdit")
     editButton.OnClick = function(self, event, side, x, y)
       if configList.Selected ~= nil then
-        -- todo
+        return initConfigEditView(configList.Selected)
       else
         program:DisplayAlertWindow("Error", "An item must be selected!", { "Whatever" })
       end
+    end
+
+    local powerButton = program:GetObject("PowerButton")
+    powerButton.OnClick = function(self)
+      self.Text = self.Toggle and "Active" or "Inactive"
     end
 
     local exitButton = program:GetObject("Exit")
@@ -165,7 +325,15 @@ local ok, err = pcall(function()
     end
 
     exitButton.OnClick = function(self, event, side, x, y)
-      program:Quit()
+      if powerButton.Toggle then
+        program:DisplayAlertWindow("Warning", "All running configs will terminate if you exit.\nContinue anyway?", { "No", "Yes" }, function(value)
+          if value == "Yes" then
+            program:Quit()
+          end
+        end)
+      else
+        program:Quit()
+      end
     end
   end
 
@@ -174,10 +342,11 @@ local ok, err = pcall(function()
   end)
 end)
 
+term.setBackgroundColour(colours.black)
+term.setTextColour(colours.white)
+term.clear()
+term.setCursorPos(1, 1)
+
 if not ok then
-  term.setBackgroundColour(colours.black)
-  term.setTextColour(colours.white)
-  term.clear()
-  term.setCursorPos(1, 1)
   printError(err)
 end

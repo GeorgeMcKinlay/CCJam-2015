@@ -4,11 +4,7 @@
     {
       Name = "ConfigList",
       Type = "ListView",
-      Items = {
-        "08:00 -> Farm",
-        "13:00 -> Feed the cat",
-        "19:00 -> Take out the garbage",
-      },
+      Items = {},
 
       CanSelect = true,
 
@@ -77,11 +73,19 @@
     },
 
     {
+      Name = "PowerButton",
       Type = "Button",
-      X = "100%,-27",
+      X = "100%,-26",
       Y = 2,
 
-      Text = "Force Run"
+      Text = "Active",
+
+      Width = 10,
+
+      ActiveBackgroundColour = "green",
+      BackgroundColour = "red",
+
+      Toggle = true
     }
   },
 
