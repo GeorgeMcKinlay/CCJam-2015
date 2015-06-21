@@ -26,6 +26,18 @@
     },
 
     {
+      Name = "Clock",
+      Type = "Label",
+      Text = "00:00",
+      X = "100%,-4",
+      Y = "100%",
+
+      AutoWidth = true,
+
+      TextColour = "lightGrey",
+    },
+
+    {
       Name = "Exit",
       Type = "Button",
       Text = "X",

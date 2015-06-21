@@ -11,6 +11,7 @@ local ok, err = pcall(function()
   local initConfigEditView = nil
 
   local configs = {}
+  local active = true
 
   local function getConfigByID(id)
     for _,v in pairs(configs) do
@@ -186,7 +187,8 @@ local ok, err = pcall(function()
         ConfigName = name,
         File = file,
         Text = textutils.formatTime(time, true) .. " -> " .. name,
-        Type = radioLuaProg.Selected and CONFIG_TYPE_LUA or CONFIG_TYPE_TASK
+        Type = radioLuaProg.Selected and CONFIG_TYPE_LUA or CONFIG_TYPE_TASK,
+        HasExecuted = false
       }
 
       saveConfigs()
@@ -315,6 +317,7 @@ local ok, err = pcall(function()
     local powerButton = program:GetObject("PowerButton")
     powerButton.OnClick = function(self)
       self.Text = self.Toggle and "Active" or "Inactive"
+      active = self.Toggle
     end
 
     local exitButton = program:GetObject("Exit")
@@ -335,9 +338,48 @@ local ok, err = pcall(function()
         program:Quit()
       end
     end
+
+    program:StartRepeatingTimer(function()
+      local clock = program:GetObject("Clock")
+      if clock then
+        clock.Text = textutils.formatTime(os.time(), true)
+      end
+    end, 1)
+  end
+
+  local function getSecond(time)
+    return math.floor((time - math.floor(time)) * 100)
+  end
+
+  local function getMinute(time)
+    return math.floor(time)
   end
 
   program:Run(function()
+    local lastDay = 0
+
+    program:StartRepeatingTimer(function()
+      if active then
+        for _,v in pairs(configs) do
+          if (getMinute(os.time()) == getMinute(v.Time) and getSecond(os.time()) == getSecond(v.Time)) and not v.HasExecuted then
+            if v.Type == CONFIG_TYPE_LUA then
+              shell.run(v.File)
+            end
+
+            v.HasExecuted = true
+          end
+        end
+
+        if os.day() ~= lastDay then
+          for _,v in pairs(configs) do
+            v.HasExecuted = false
+          end
+        end
+
+        lastDay = os.day()
+      end
+    end, 0.5)
+
     return initConfigsView()
   end)
 end)
