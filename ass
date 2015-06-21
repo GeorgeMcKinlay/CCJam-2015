@@ -1,86 +1,183 @@
-local bedrockPath='/' if OneOS then OneOS.LoadAPI('/System/API/Bedrock.lua', false)elseif fs.exists(bedrockPath..'/Bedrock')then os.loadAPI(bedrockPath..'/Bedrock')else if http then print('Downloading Bedrock...')local h=http.get('http://pastebin.com/raw.php?i=0MgKNqpN')if h then local f=fs.open(bedrockPath..'/Bedrock','w')f.write(h.readAll())f.close()h.close()os.loadAPI(bedrockPath..'/Bedrock')else error('Failed to download Bedrock. Is your internet working?') end else error('This program needs to download Bedrock to work. Please enable HTTP.') end end if Bedrock then Bedrock.BasePath = bedrockPath Bedrock.ProgramPath = shell.getRunningProgram() end
+local ok, err = pcall(function()
+  local bedrockPath='/' if OneOS then OneOS.LoadAPI('/System/API/Bedrock.lua', false)elseif fs.exists(bedrockPath..'/Bedrock')then os.loadAPI(bedrockPath..'/Bedrock')else if http then print('Downloading Bedrock...')local h=http.get('http://pastebin.com/raw.php?i=0MgKNqpN')if h then local f=fs.open(bedrockPath..'/Bedrock','w')f.write(h.readAll())f.close()h.close()os.loadAPI(bedrockPath..'/Bedrock')else error('Failed to download Bedrock. Is your internet working?') end else error('This program needs to download Bedrock to work. Please enable HTTP.') end end if Bedrock then Bedrock.BasePath = bedrockPath Bedrock.ProgramPath = shell.getRunningProgram() end
 
-local program = Bedrock:Initialise()
+  local program = Bedrock:Initialise()
 
-local initConfigsView = nil
-local initConfigWizard = nil
+  local initConfigsView = nil
+  local initConfigWizard = nil
 
-initConfigWizard = function()
-  program:LoadView("configwiz")
+  initConfigWizard = function()
+    program:LoadView("configwiz")
 
-  local config = {}
-  local viewIndex = 1
-  local views = {
-    [1] = program:GetObject("ConfigTypeView"),
-    [2] = program:GetObject("ConfigSettingsView")
-  }
+    local config = {}
+    local viewIndex = 1
+    local views = {
+      [1] = program:GetObject("ConfigTypeView"),
+      [2] = program:GetObject("ConfigSettingsView")
+    }
 
-  local function changeView(idx)
-    if idx <= #views and idx > 0 then
-      viewIndex = idx
+    local function changeView(idx)
+      if idx <= #views and idx > 0 then
+        viewIndex = idx
 
-      for k,v in pairs(views) do
-        v.Visible = k == idx
-        v.Enabled = k == idx
-        v.IgnoreClick = k ~= idx
+        for k,v in pairs(views) do
+          v.Visible = k == idx
+          v.Enabled = k == idx
+          v.IgnoreClick = k ~= idx
+        end
+
+        program:SetActiveObject(nil)
       end
+    end
+
+    changeView(1)
+
+    local backButton = program:GetObject("Back")
+    backButton.OnClick = function(self, event, side, x, y)
+      return initConfigsView()
+    end
+
+    local nextButton = program:GetObject("Next")
+    nextButton.OnClick = function(self, event, side, x, y)
+      changeView(viewIndex + 1)
+
+      if viewIndex == #views then
+        nextButton.Text = "Done"
+      else
+        nextButton.Text = "Next"
+      end
+    end
+
+    local prevButton = program:GetObject("Previous")
+    prevButton.OnClick = function(self, event, side, x, y)
+      changeView(viewIndex - 1)
+
+      if viewIndex == #views then
+        nextButton.Text = "Done"
+      else
+        nextButton.Text = "Next"
+      end
+    end
+
+    local radioLuaProg = program:GetObject("RadioLuaProg")
+    local radioAssTask = program:GetObject("RadioASSTask")
+
+    radioLuaProg.Friends = {
+      radioAssTask
+    }
+
+    radioAssTask.Friends = {
+      radioLuaProg
+    }
+
+    local fileLabel = program:GetObject("FileLabel")
+    fileLabel.InitialText = fileLabel.Text
+
+    local function typeSelectChange()
+      fileLabel.Text = fileLabel.InitialText:gsub("%.%.%.", radioLuaProg.Selected and "Lua" or "Task")
+    end
+
+    radioLuaProg.OnSelectionChange = typeSelectChange
+    radioAssTask.OnSelectionChange = typeSelectChange
+
+    typeSelectChange()
+
+    local timeBox = program:GetObject("TimeBox")
+    timeBox.Text = textutils.formatTime(os.time() + 0.04, true)
+
+    local invalid = false
+
+    local invInputText1 = program:GetObject("InvalidInputText1")
+    local invInputText2 = program:GetObject("InvalidInputText2")
+
+    local function updateInvalidState()
+      invInputText1.Visible = invalid
+      invInputText2.Visible = invalid
+    end
+
+    local fileBox = program:GetObject("FileInput")
+    local invalidable = { [timeBox] = "OnChange", [fileBox] = "OnChange" }
+
+    local function checkInvalids()
+      for k1,v1 in pairs(invalidable) do
+        if k1.Invalid then
+          invalid = true
+          updateInvalidState()
+          return
+        end
+      end
+
+      invalid = false
+      updateInvalidState()
+    end
+
+    for k,v in pairs(invalidable) do
+      k[v] = checkInvalids
+    end
+
+    local nameBox = program:GetObject("NameBox")
+    checkInvalids()
+
+    return {
+
+    }
+  end
+
+  initConfigsView = function()
+    program:LoadView("configurations")
+
+    local configList = program:GetObject("ConfigList")
+
+    local addButton = program:GetObject("Add")
+    addButton.OnClick = function(self, event, side, x, y)
+      return initConfigWizard()
+    end
+
+    local remButton = program:GetObject("Remove")
+    remButton.OnClick = function(self, event, side, x, y)
+      if configList.Selected ~= nil then
+        program:DisplayAlertWindow("Confirmation", "Are you sure you want to delete this item?", { "Pls no", "Yeah" }, function(value)
+          if value == "Yeah" then
+            local idx = configList:GetIndex(configList.Selected)
+            table.remove(configList.Items, idx)
+            configList:UpdateItems()
+          end
+        end)
+      else
+        program:DisplayAlertWindow("Error", "An item must be selected!", { "Whatever" })
+      end
+    end
+
+    local editButton = program:GetObject("ConfigEdit")
+    editButton.OnClick = function(self, event, side, x, y)
+      if configList.Selected ~= nil then
+        -- todo
+      else
+        program:DisplayAlertWindow("Error", "An item must be selected!", { "Whatever" })
+      end
+    end
+
+    local exitButton = program:GetObject("Exit")
+
+    if OneOS then
+      exitButton.Visible = false
+      program:GetObject("Heading").X = 2
+    end
+
+    exitButton.OnClick = function(self, event, side, x, y)
+      program:Quit()
     end
   end
 
-  changeView(1)
-
-  local backButton = program:GetObject("Back")
-  backButton.OnClick = function(self, event, side, x, y)
+  program:Run(function()
     return initConfigsView()
-  end
-
-  local nextButton = program:GetObject("Next")
-  nextButton.OnClick = function(self, event, side, x, y)
-    changeView(viewIndex + 1)
-  end
-
-  local prevButton = program:GetObject("Previous")
-  prevButton.OnClick = function(self, event, side, x, y)
-    changeView(viewIndex - 1)
-  end
-
-  local radioLuaProg = program:GetObject("RadioLuaProg")
-  local radioAssTask = program:GetObject("RadioASSTask")
-
-  radioLuaProg.Friends = {
-    radioAssTask
-  }
-
-  radioAssTask.Friends = {
-    radioLuaProg
-  }
-end
-
-initConfigsView = function()
-  program:LoadView("configurations")
-
-  local configList = program:GetObject("ConfigList")
-  if #configList.Items > 1 then
-    configList:SelectItem(configList:GetNth(1))
-  end
-
-  local addButton = program:GetObject("Add")
-  addButton.OnClick = function(self, event, side, x, y)
-    return initConfigWizard()
-  end
-
-  local exitButton = program:GetObject("Exit")
-
-  if OneOS then
-    exitButton.Visible = false
-    program:GetObject("Heading").X = 2
-  end
-
-  exitButton.OnClick = function(self, event, side, x, y)
-    program:Quit()
-  end
-end
-
-program:Run(function()
-  return initConfigsView()
+  end)
 end)
+
+if not ok then
+  term.setBackgroundColour(colours.black)
+  term.setTextColour(colours.white)
+  term.clear()
+  term.setCursorPos(1, 1)
+  printError(err)
+end

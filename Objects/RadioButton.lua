@@ -37,7 +37,7 @@ Click = function(self, event, side, x, y)
     self.Selected = true
 
     if self.OnSelectionChange then
-      self:OnSelectionChange(self.Selected)
+      self:OnSelectionChange()
     end
 
     return true

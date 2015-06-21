@@ -99,7 +99,7 @@
           X = 6,
           Y = "50%,4",
 
-          Text = "With this option you can run or create"
+          Text = "With this option you can run"
         },
 
         {
@@ -107,7 +107,7 @@
           X = 6,
           Y = "50%,5",
 
-          Text = "a new A.S.S. task. These are easy to make"
+          Text = "an A.S.S. task. These are easy to make"
         },
 
         {
@@ -138,11 +138,100 @@
       {
         {
           Type = "Label",
-          X = 1,
-          Y = 1,
-          Text = "ayyy sick settings bruv"
+          X = 2,
+          Y = 2,
+          Text = "Name:"
+        },
+
+        {
+          Name = "NameBox",
+          Type = "TextBox",
+          X = 8,
+          Y = 2,
+
+          Width = "50%,-10",
+          Height = 1,
+
+          Placeholder = "...",
+          PlaceholderTextColour = "lightGrey",
+
+          BackgroundColour = "white"
+        },
+
+        {
+          Type = "Label",
+          X = "50%",
+          Y = 2,
+
+          bText = "Time:",
+          Text = "Time:"
+        },
+
+        {
+          Name = "TimeBox",
+          Type = "PatternTextBox",
+          X = "50%,6",
+          Y = 2,
+
+          Width = "50%,-7",
+          Height = 1,
+
+          Pattern = "^([0-9][0-9]?)%:([0-5][0-9]?)$",
+
+          Placeholder = "00:00",
+          PlaceholderTextColour = "lightGrey",
+
+          BackgroundColour = "white"
+        },
+
+        {
+          Name = "InvalidInputText1",
+          Type = "Label",
+          X = 2,
+          Y = "100%,-2",
+
+          Visible = false,
+
+          Text = "The currently provided input is invalid.",
+          TextColour = "red"
+        },
+
+        {
+          Name = "InvalidInputText2",
+          Type = "Label",
+          X = 2,
+          Y = "100%,-1",
+
+          Visible = false,
+
+          Text = "Please correct the fields marked in red.",
+          TextColour = "red"
+        },
+
+        {
+          Name = "FileLabel",
+          Type = "Label",
+          Text = "... File:",
+          X = 2,
+          Y = 4
+        },
+
+        {
+          Name = "FileInput",
+          Type = "FileBox",
+          X = 2,
+          Y = 5,
+
+          DirsAllowed = false,
+
+          Width = "100%,-2",
+          Height = 1,
+
+          BackgroundColour = "white"
         }
-      }
+      },
+
+      BackgroundColour = "lightGrey"
     }
   },
 
